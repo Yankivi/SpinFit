@@ -1,17 +1,14 @@
 %% ==========================================================
 % SpinFit PoC
-% Main program
+% Load a TEMPOL spectrum, identify the closest library radical,
+% fit its parameters, and report similarity metrics.
 %===========================================================
 
 clear;
 clc;
 close all;
 
-%% Add project folders
-
 addpath(genpath(pwd));
-
-%% Select experimental spectrum
 
 [file,path] = uigetfile('*.json','Select E-Spinosa spectrum');
 
@@ -20,57 +17,13 @@ if isequal(file,0)
     return;
 end
 
-filename = fullfile(path,file);
+Exp = loadJSONSpectrum(fullfile(path,file));
+Library = loadLibrary();
 
-%% Load experimental spectrum
+InitialMatch = identifyBestRadical(Exp,Library);
+Result = fitSpectrum(Exp,InitialMatch.Radical);
 
-Exp = loadJSONSpectrum(filename);
-
-%% Load radical from library
-
-Sys = loadTEMPOL();
-
-%% Initial simulation
-
-[B0,Sim0] = simulateSpectrum(Sys,Exp);
-
-%% Plot initial comparison
-
-figure('Name','SpinFit PoC','Color','w');
-
-subplot(2,1,1)
-
-plot(Exp.B,Exp.signal,'k','LineWidth',1.5);
-hold on
-plot(B0,Sim0,'r','LineWidth',1.5);
-
-grid on
-xlabel('Magnetic Field (mT)');
-ylabel('Intensity');
-title('Initial Simulation');
-legend('Experiment','Library TEMPOL','Location','best');
-
-%% Automatic fitting
-
-Result = fitTEMPOL(Exp,Sys);
-
-%% Plot fitted spectrum
-
-subplot(2,1,2)
-
-plot(Exp.B,Exp.signal,'k','LineWidth',1.5);
-hold on
-plot(Result.B,Result.Signal,'r','LineWidth',1.5);
-
-grid on
-xlabel('Magnetic Field (mT)');
-ylabel('Intensity');
-
-title(sprintf('Fit Result   Similarity = %.2f %%',Result.Similarity));
-
-legend('Experiment','Fitted TEMPOL','Location','best');
-
-%% Console report
+plotComparison(Exp,Result);
 
 fprintf('\n');
 fprintf('=============================================\n');
@@ -81,17 +34,18 @@ fprintf('Identified Radical : %s\n\n',Result.Name);
 
 fprintf('Optimized Parameters\n');
 fprintf('---------------------------------------------\n');
-fprintf('g-factor           : %.6f\n',Result.g);
-fprintf('Hyperfine A (MHz)  : %.3f\n',Result.A);
+fprintf('g tensor           : %s\n',mat2str(Result.g,6));
+fprintf('Hyperfine A (MHz)  : %s\n',mat2str(Result.A,6));
 fprintf('Line Width (mT)    : %.4f\n',Result.lwpp);
 fprintf('Field Shift (mT)   : %.4f\n',Result.shift);
 fprintf('Amplitude          : %.4f\n\n',Result.amplitude);
 
 fprintf('Fit Quality\n');
 fprintf('---------------------------------------------\n');
-fprintf('Similarity         : %.2f %%\n',Result.Similarity);
+fprintf('Initial Similarity : %.2f %%\n',InitialMatch.Score);
+fprintf('Fitted Similarity  : %.2f %%\n',Result.Similarity);
 fprintf('RMS Error          : %.6f\n',Result.RMS);
-fprintf('R²                 : %.6f\n',Result.R2);
+fprintf('R^2                : %.6f\n',Result.R2);
 
 fprintf('\n=============================================\n');
 fprintf('Fit completed successfully.\n');
