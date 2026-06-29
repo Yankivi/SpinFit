@@ -1,8 +1,12 @@
-
-function Signal = simulateForFit(p, Exp)
+function Signal = simulateForFit(p,Exp,Sys)
 
 %==========================================================
 % Simulate spectrum for fitting
+%
+% INPUT
+%   p
+%   Exp
+%   Sys
 %
 % p =
 % [ g
@@ -10,43 +14,40 @@ function Signal = simulateForFit(p, Exp)
 %   lwpp
 %   FieldShift
 %   Amplitude ]
+%
 %==========================================================
 
-%% Load reference radical
+%% Update radical parameters
 
-Sys = loadTEMPOL();
-
-%% Update fitting parameters
-
-Sys.g    = p(1);
-Sys.A    = p(2);
+Sys.g = p(1);
+Sys.A = p(2);
 Sys.lwpp = p(3);
 
 FieldShift = p(4);
-Amplitude  = p(5);
+Amplitude = p(5);
 
 %% Simulate spectrum
 
-[B, Signal] = simulateSpectrum(Sys, Exp);
+[B,Signal] = simulateSpectrum(Sys,Exp);
 
-%% Apply magnetic field shift
+%% Shift magnetic field
 
 B = B + FieldShift;
 
-%% Interpolate onto experimental field axis
+%% Interpolate
 
 Signal = interp1( ...
-    B, ...
-    Signal, ...
-    Exp.B, ...
-    'linear', ...
+    B,...
+    Signal,...
+    Exp.B,...
+    'linear',...
     0);
 
-%% Apply amplitude
+%% Amplitude correction
 
-Signal = Amplitude * Signal;
+Signal = Signal .* Amplitude;
 
-%% Remove DC offset
+%% Remove DC
 
 Signal = Signal - mean(Signal);
 
@@ -54,12 +55,10 @@ Signal = Signal - mean(Signal);
 
 m = max(abs(Signal));
 
-if m > 0
-    Signal = Signal ./ m;
+if m~=0
+    Signal = Signal./m;
 end
-
-%% Return column vector
 
 Signal = Signal(:);
 
-End
+end
