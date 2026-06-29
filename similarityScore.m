@@ -69,4 +69,4 @@ end
 
 Similarity = max(0, min(100, corrValue * 100));
 
-End
+end
