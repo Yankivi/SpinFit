@@ -1,52 +1,57 @@
-function Result = identifyBestRadical(Exp,Library)
-% identifyBestRadical Simulates every library radical and returns best match.
+function Match = identifyBestRadical(Exp,Library)
+%==============================================================
+% identifyBestRadical
+%
+% Finds the radical from the library that best matches
+% the experimental spectrum.
+%==============================================================
 
-nRadicals = numel(Library);
-
-if nRadicals == 0
-    error('Library is empty.');
-end
-
-Results = struct([]);
-
-fprintf('\nSearching radical library...\n');
+fprintf('\n');
+fprintf('Searching radical library...\n');
 fprintf('------------------------------------------\n');
 
-for k = 1:nRadicals
+n = numel(Library);
+
+Scores = zeros(n,1);
+
+for k = 1:n
+
+    %% Simulate
+
     Sim = simulateRadical(Library(k),Exp);
-    [rmsValue,r2Value,similarity] = similarityScore(Exp.Signal,Sim.Signal);
 
-    Results(k).Index = k;
-    Results(k).Name = Library(k).Name;
-    Results(k).Score = similarity;
-    Results(k).RMS = rmsValue;
-    Results(k).R2 = r2Value;
-    Results(k).Simulation = Sim;
-    Results(k).Radical = Library(k);
+    %% Compare
 
-    fprintf('%-20s %.2f %%\n',Library(k).Name,similarity);
+    [~,~,Scores(k)] = similarityScore( ...
+        Exp.Signal,...
+        Sim.Signal);
+
+    fprintf('%-20s %8.2f %%\n', ...
+        char(Library(k).Name), ...
+        Scores(k));
+
 end
+
+%% Best match
+
+[BestScore,idx] = max(Scores);
 
 fprintf('------------------------------------------\n');
 
-scores = [Results.Score];
-[~,idx] = max(scores);
+fprintf('Best match : %s\n',char(Library(idx).Name));
 
-Result = Results(idx);
-Result.AllResults = Results;
+fprintf('Similarity : %.2f %%\n',BestScore);
 
-fprintf('\nBest match : %s\n',Result.Name);
-fprintf('Similarity : %.2f %%\n',Result.Score);
+fprintf('\n');
 
-figure('Name','Library search');
-plot(Exp.Field,Exp.Signal,'k','LineWidth',1.5);
-hold on
-plot(Result.Simulation.Field,Result.Simulation.Signal,'r','LineWidth',1.5);
-grid on
-box on
-xlabel('Magnetic field (mT)')
-ylabel('Normalized intensity')
-title(sprintf('%s   (%.2f%%)',Result.Name,Result.Score));
-legend('Experimental','Simulated','Location','best');
+Match = struct();
+
+Match.Index = idx;
+
+Match.Score = BestScore;
+
+Match.Radical = Library(idx);
+
+Match.AllScores = Scores;
 
 end
