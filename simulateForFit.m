@@ -1,64 +1,18 @@
-function Signal = simulateForFit(p,Exp,Sys)
+function Signal = simulateForFit(p,Exp,Radical,ng,nA,expectedN)
+% simulateForFit Updates a library radical from optimizer parameters.
 
-%==========================================================
-% Simulate spectrum for fitting
-%
-% INPUT
-%   p
-%   Exp
-%   Sys
-%
-% p =
-% [ g
-%   A
-%   lwpp
-%   FieldShift
-%   Amplitude ]
-%
-%==========================================================
-
-%% Update radical parameters
-
-Sys.g = p(1);
-Sys.A = p(2);
-Sys.lwpp = p(3);
-
-FieldShift = p(4);
-Amplitude = p(5);
-
-%% Simulate spectrum
-
-[B,Signal] = simulateSpectrum(Sys,Exp);
-
-%% Shift magnetic field
-
-B = B + FieldShift;
-
-%% Interpolate
-
-Signal = interp1( ...
-    B,...
-    Signal,...
-    Exp.B,...
-    'linear',...
-    0);
-
-%% Amplitude correction
-
-Signal = Signal .* Amplitude;
-
-%% Remove DC
-
-Signal = Signal - mean(Signal);
-
-%% Normalize
-
-m = max(abs(Signal));
-
-if m~=0
-    Signal = Signal./m;
+if numel(p) ~= expectedN
+    error('Fitting parameter vector has %d elements, but %d are required.',numel(p),expectedN);
 end
 
-Signal = Signal(:);
+Radical.Sys.g = p(1:ng);
+Radical.Sys.A = p(ng+1:ng+nA);
+Radical.Sys.lwpp = p(ng+nA+1);
+fieldShift = p(ng+nA+2);
+amplitude = p(ng+nA+3);
 
+Sim = simulateRadical(Radical,Exp);
+Signal = interp1(Sim.Field + fieldShift,Sim.Signal,Exp.Field,'linear',0);
+Signal = Signal(:) .* amplitude;
+Signal = Signal - mean(Signal);
 end

@@ -44,4 +44,4 @@ Sys.FieldShift = 0.0;         % mT
 
 Sys.Amplitude = 1.0;
 
-End
+end
