@@ -1,73 +1,62 @@
 function Library = loadLibrary()
 %==============================================================
 % loadLibrary
+%
 % Loads radical library.
-% Version 1.0 (TEMPOL only)
+% Version 1.0
 %==============================================================
 
-Library = struct([]);
+%% TEMPOL
 
-%% ============================================================
-% TEMPOL
-% =============================================================
+R = struct();
 
 R.Name = "TEMPOL";
 R.ID = "TEMPOL";
 R.Type = "Nitroxide";
 
-%---------------- Electron spin -------------------------------
+%% ---------------- Physical parameters -----------------------
+
+R.Sys = struct();
 
 R.Sys.S = 1/2;
-
-%---------------- g tensor ------------------------------------
-
-R.Sys.g = [2.0093 2.0061 2.0022];
-
-%---------------- Hyperfine -----------------------------------
-
+R.Sys.g = 2.0058;
 R.Sys.Nucs = '14N';
-R.Sys.n = 1;
-R.Sys.A = [20 20 100];      % MHz
+R.Sys.A = 46.8;          % MHz
+R.Sys.lwpp = 0.10;       % mT
 
-%---------------- Line width ----------------------------------
+%% ---------------- Simulation settings -----------------------
 
-R.Sys.lwpp = 0.18;
-
-%---------------- Optional parameters -------------------------
-
-R.Sys.weight = 1;
-
-R.Sys.gStrain = [];
-R.Sys.AStrain = [];
-R.Sys.HStrain = [];
-R.Sys.lw = [];
-R.Sys.Exchange = [];
-
-%---------------- Simulation settings -------------------------
+R.Sim = struct();
 
 R.Sim.Method = "garlic";
 R.Sim.RangeMargin = 2;
 
-%---------------- Parameters allowed for fitting --------------
+%% ---------------- Fit settings ------------------------------
+
+R.Fit = struct();
 
 R.Fit.Parameters = { ...
     'g', ...
     'A', ...
     'lwpp'};
 
-R.Fit.gLower = [-0.002 -0.002 -0.002];
-R.Fit.gUpper = [ 0.002  0.002  0.002];
+R.Fit.gLower = -0.005;
+R.Fit.gUpper =  0.005;
 
-R.Fit.ALower = [-5 -5 -10];
-R.Fit.AUpper = [ 5  5  10];
+R.Fit.ALower = -10;
+R.Fit.AUpper =  10;
 
 R.Fit.lwLower = 0.05;
-R.Fit.lwUpper = 1.00;
+R.Fit.lwUpper = 0.50;
 
-%---------------- Description ---------------------------------
+%% ---------------- Description -------------------------------
 
 R.Description = "TEMPOL radical";
 
-Library(end+1) = R;
+%% Library
+
+Library = R;
 
 end
+
+
