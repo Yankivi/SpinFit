@@ -30,9 +30,7 @@ Exp.Attenuation   = opt.MwParameter.AttenuationDb;
 %% Spectrum
 curve = raw.Values(1);
 pts = curve.Values;
-
 N = length(pts);
-
 signal = zeros(N,1);
 
 for k = 1:N

@@ -82,10 +82,30 @@ Result.Field = Exp.Field;
 Result.B = Exp.Field;
 
 Result.Signal = Calc;
-
 Result.RMS = RMS;
 Result.R2 = R2;
 Result.Similarity = Similarity;
+Result.Parameters = table({Result.g},{Result.A},Result.lwpp,Result.shift,Result.amplitude, ...
+    'VariableNames',{'g','A_MHz','lwpp','FieldShift','Amplitude'});
+
+end
+
+function Signal = simulateForFit(p,Exp,Radical,ng,nA,expectedN)
+if numel(p) ~= expectedN
+    error('Fitting parameter vector has %d elements, but %d are required.',numel(p),expectedN);
+end
+
+Radical.Sys.g = p(1:ng);
+Radical.Sys.A = p(ng+1:ng+nA);
+Radical.Sys.lwpp = p(ng+nA+1);
+fieldShift = p(ng+nA+2);
+amplitude = p(ng+nA+3);
+
+Sim = simulateRadical(Radical,Exp);
+Signal = interp1(Sim.Field + fieldShift,Sim.Signal,Exp.Field,'linear',0);
+Signal = Signal(:) .* amplitude;
+Signal = Signal - mean(Signal);
+end
 
 Result.Parameters = table( ...
     {Result.g}, ...
@@ -96,6 +116,8 @@ Result.Parameters = table( ...
     'VariableNames', ...
     {'g','A_MHz','lwpp','FieldShift','Amplitude'});
 
+function p = applyBounds(p,lb,ub)
+p = max(lb,min(ub,p));
 end
 
 %======================================================================
