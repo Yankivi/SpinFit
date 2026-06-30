@@ -1,55 +1,49 @@
-function [RMS, R2, Similarity] = similarityScore(ExpSignal, CalcSignal)
-
-%==========================================================
-% Calculate fit quality metrics
+function [RMS,R2,Similarity] = similarityScore(ExpSignal,SimSignal)
+%==============================================================
+% similarityScore
 %
-% Inputs:
-%   ExpSignal  - Experimental spectrum
-%   CalcSignal - Simulated spectrum
+% Calculates similarity between experimental and simulated
+% EPR spectra.
 %
-% Outputs:
-%   RMS         - Root Mean Square Error
-%   R2          - Coefficient of determination
-%   Similarity  - Similarity in %
-%==========================================================
+% OUTPUT
+%   RMS
+%   R2
+%   Similarity (0...100 %)
+%==============================================================
 
 %% Column vectors
 
 ExpSignal = ExpSignal(:);
-CalcSignal = CalcSignal(:);
+SimSignal = SimSignal(:);
 
-%% Remove DC offset
+%% Remove baseline
 
 ExpSignal = ExpSignal - mean(ExpSignal);
-CalcSignal = CalcSignal - mean(CalcSignal);
+SimSignal = SimSignal - mean(SimSignal);
 
 %% Normalize
 
-ExpMax = max(abs(ExpSignal));
-CalcMax = max(abs(CalcSignal));
-
-if ExpMax > 0
-    ExpSignal = ExpSignal / ExpMax;
+if max(abs(ExpSignal))>0
+    ExpSignal = ExpSignal/max(abs(ExpSignal));
 end
 
-if CalcMax > 0
-    CalcSignal = CalcSignal / CalcMax;
+if max(abs(SimSignal))>0
+    SimSignal = SimSignal/max(abs(SimSignal));
 end
-
-%% Residual
-
-Residual = ExpSignal - CalcSignal;
 
 %% RMS
+
+Residual = ExpSignal - SimSignal;
 
 RMS = sqrt(mean(Residual.^2));
 
 %% R²
 
 SSres = sum(Residual.^2);
-SStot = sum((ExpSignal - mean(ExpSignal)).^2);
 
-if SStot == 0
+SStot = sum((ExpSignal-mean(ExpSignal)).^2);
+
+if SStot==0
     R2 = 1;
 else
     R2 = 1 - SSres/SStot;
@@ -57,16 +51,18 @@ end
 
 %% Pearson correlation
 
-R = corrcoef(ExpSignal, CalcSignal);
+C = corrcoef(ExpSignal,SimSignal);
 
-if numel(R) < 4 || any(isnan(R(:)))
-    corrValue = 0;
+if numel(C)==4
+    Corr = C(1,2);
 else
-    corrValue = R(1,2);
+    Corr = 0;
 end
 
-%% Similarity (%)
+%% Similarity
 
-Similarity = max(0, min(100, corrValue * 100));
+Similarity = max(0,min(100,100*Corr));
 
 end
+
+
