@@ -1,30 +1,23 @@
 function Signal = simulateForFit(p,Exp,Sys)
-
 %==========================================================
-% Simulate spectrum for fitting
+% simulateForFit
 %
-% INPUT
-%   p
-%   Exp
-%   Sys
+% Simulates a spectrum during nonlinear fitting.
 %
 % p =
 % [ g
 %   A
 %   lwpp
-%   FieldShift
-%   Amplitude ]
-%
+%   FieldShift ]
 %==========================================================
 
 %% Update radical parameters
 
-Sys.g = p(1);
-Sys.A = p(2);
+Sys.g    = p(1);
+Sys.A    = p(2);
 Sys.lwpp = p(3);
 
 FieldShift = p(4);
-Amplitude = p(5);
 
 %% Simulate spectrum
 
@@ -34,31 +27,23 @@ Amplitude = p(5);
 
 B = B + FieldShift;
 
-%% Interpolate
+%% Interpolate onto experimental magnetic field axis
 
 Signal = interp1( ...
     B,...
     Signal,...
     Exp.B,...
-    'linear',...
+    'pchip',...
     0);
-
-%% Amplitude correction
-
-Signal = Signal .* Amplitude;
-
-%% Remove DC
-
-Signal = Signal - mean(Signal);
 
 %% Normalize
 
-m = max(abs(Signal));
+Signal = normalizeSignal(Signal);
 
-if m~=0
-    Signal = Signal./m;
-end
+%% Ensure column vector
 
 Signal = Signal(:);
 
 end
+
+
