@@ -2,42 +2,36 @@ function Sim = simulateRadical(Radical,Exp)
 %==============================================================
 % simulateRadical
 %
-% Simulates EPR spectrum for one radical from the library.
+% Simulates an EPR spectrum using EasySpin.
 %
 % INPUT
-%   Radical   - element of Library
-%   Exp        - experimental spectrum structure
+%   Radical - library radical
+%   Exp     - experimental spectrum
 %
 % OUTPUT
-%   Sim.Field
-%   Sim.Signal
+%   Sim.RawField   - EasySpin magnetic field axis
+%   Sim.RawSignal  - EasySpin simulated spectrum
+%   Sim.Field      - interpolated field axis
+%   Sim.Signal     - interpolated spectrum
 %==============================================================
 
-if ~exist('garlic','file')
-    error(['EasySpin is not installed or not added to MATLAB path.' ...
-           newline ...
-           'Function garlic() was not found.']);
-end
-
-%% -------------------------------------------------------------
-% Experimental parameters
-%% -------------------------------------------------------------
+%% Simulation settings
 
 ExpSim = struct();
 
-ExpSim.mwFreq = Exp.FrequencyGHz;
-ExpSim.CenterSweep = [Exp.CenterField Exp.SweepWidth];
-ExpSim.nPoints = length(Exp.Field);
+ExpSim.mwFreq   = Exp.FrequencyGHz;
+ExpSim.Range    = [Exp.StartField Exp.EndField];
+ExpSim.nPoints  = max(4096,length(Exp.Field));
+ExpSim.Harmonic = 1;
 
-%% -------------------------------------------------------------
-% Simulate
-%% -------------------------------------------------------------
+%% Run EasySpin
 
-switch lower(Radical.Sim.Method)
+switch lower(string(Radical.Sim.Method))
 
     case "garlic"
 
         [B,spc] = garlic(Radical.Sys,ExpSim);
+        spc = -spc;
 
     case "pepper"
 
@@ -49,57 +43,44 @@ switch lower(Radical.Sim.Method)
 
 end
 
-%% -------------------------------------------------------------
-% Normalize
-%% -------------------------------------------------------------
+%% Prepare spectrum
 
+B = B(:);
 spc = spc(:);
 
 spc = spc - mean(spc);
 
-m = max(abs(spc));
-
-if m~=0
-    spc = spc./m;
+if max(abs(spc))>0
+    spc = spc/max(abs(spc));
 end
 
-%% -------------------------------------------------------------
-% Interpolate to experimental field axis
-%% -------------------------------------------------------------
+%% Interpolate to experiment
 
-spcInterp = interp1( ...
-    B(:), ...
-    spc(:), ...
-    Exp.Field, ...
-    'linear', ...
+Signal = interp1( ...
+    B,...
+    spc,...
+    Exp.Field,...
+    'pchip',...
     0);
 
-%% -------------------------------------------------------------
-% Normalize again
-%% -------------------------------------------------------------
+Signal = Signal - mean(Signal);
 
-spcInterp = spcInterp - mean(spcInterp);
-
-m = max(abs(spcInterp));
-
-if m~=0
-    spcInterp = spcInterp./m;
+if max(abs(Signal))>0
+    Signal = Signal/max(abs(Signal));
 end
 
-%% -------------------------------------------------------------
-% Result
-%% -------------------------------------------------------------
+%% Output
 
 Sim = struct();
 
 Sim.Name = Radical.Name;
 
-Sim.Field = Exp.Field;
-
-Sim.Signal = spcInterp;
-
 Sim.RawField = B;
-
 Sim.RawSignal = spc;
 
+Sim.Field = Exp.Field;
+Sim.Signal = Signal;
+
 end
+
+
